@@ -1,6 +1,7 @@
 # Semaphore Chat App
 
-Semaphore Chat App is a secure and anonymous chat application built with the @semaphore-noir/proof package, TypeScript, React, Node.js (using Socket.io for live chat), and MongoDB.
+Semaphore Chat App is a secure and anonymous chat application built with the @semaphore-noir/proof package, TypeScript, React, Node.js (using Socket.io for live chat), and MongoDB. <br>
+
 The app focuses on providing a private and trustworthy platform for users to engage in meaningful conversations without compromising their identity all with the help of the Semaphore protocol.
 
 
