@@ -4,7 +4,8 @@ Semaphore Chat App is a secure and anonymous chat application built with the @se
 The app focuses on providing a private and trustworthy platform for users to engage in meaningful conversations without compromising their identity all with the help of the Semaphore protocol.
 
 
-##TL:DR
+## TL:DR
+
 
 - Utilizes Twitter v2-API for frontend verification, ensuring users have more than 100 followers or a verified Twitter account.
 - Upon a successful verification a semaphore proof is generated for the user.
