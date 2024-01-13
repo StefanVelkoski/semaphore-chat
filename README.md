@@ -8,7 +8,7 @@ The app focuses on providing a private and trustworthy platform for users to eng
 ## TL:DR
 
 
-- Utilizes Twitter v2-API for frontend verification, ensuring users have more than 100 followers or a verified Twitter account.
+- The app leverages Twitter OAUTH 2.0 for proof of humanity, ensuring users have more than 100 followers or a verified Twitter account.
 - Upon a successful verification a semaphore proof is generated for the user.
 - The user has to store the proof locally to be able to participate in the chat without doing a new Twitter verification.
 - The generated proof can be used as the login credentials which is essentialy the merkle tree verification.
@@ -20,7 +20,7 @@ The app focuses on providing a private and trustworthy platform for users to eng
 
 
 1. **Authentication**
-   - Utilizes Twitter v2-API for frontend verification, ensuring users have more than 100 followers or a verified Twitter account.
+   - Twitter v2-API for frontend verification, ensuring users have more than 100 followers or a verified Twitter account.
    - Backend authentication service powered by *passport-twitter*.
 
 2. **Identity**
