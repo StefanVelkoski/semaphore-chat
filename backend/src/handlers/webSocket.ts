@@ -10,13 +10,16 @@ export default (io: Server): void => {
     console.log('NEW CONNECTION');
     socket.join(baseRoom);
 
-    socket.on('sendMessage', async (message) => {
-      const messageDB = await new Message({
-        from: user._id,
-        body: message,
-      }).save();
+    socket.on(
+      'sendMessage',
+      async (message: { message: string; username: string }) => {
+        const messageDB = await new Message({
+          from: message.username,
+          body: message.message,
+        }).save();
 
-      io.to(baseRoom).emit('message', messageDB);
-    });
+        io.to(baseRoom).emit('message', messageDB);
+      }
+    );
   });
 };

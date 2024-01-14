@@ -22,7 +22,8 @@ class Semaphore {
     this.group.addMember(identity.getCommitment());
   }
 
-  async getProof(identity: Identity) {
+  async getProof(id: string) {
+    const identity = this.getIdentity(id);
     const proof = await generateProof(
       identity,
       this.group,
@@ -37,5 +38,5 @@ class Semaphore {
     return check;
   }
 }
-export const semaphoreInstance = new Semaphore(3);
+export const semaphoreInstance = new Semaphore(16);
 Object.freeze(semaphoreInstance);

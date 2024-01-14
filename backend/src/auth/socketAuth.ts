@@ -14,15 +14,7 @@ export default (io: Server) => {
 
     // Verify the JWT
     try {
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET as string
-      ) as MyJwtPayload;
-      const user = {
-        hashedTwitterId: decoded.hashedTwitterId,
-        _id: decoded._id,
-      };
-      (socket as any).user = user;
+      jwt.verify(token, process.env.JWT_SECRET as string) as MyJwtPayload;
       return next();
     } catch (error) {
       next(new Error('Invalid token'));

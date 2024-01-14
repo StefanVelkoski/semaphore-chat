@@ -13,7 +13,7 @@ const isAuth = (req: Request, res: Response, next: NextFunction) => {
       token,
       process.env.JWT_SECRET as string
     ) as MyJwtPayload;
-    const user = { hashedTwitterId: decoded.hashedTwitterId, _id: decoded._id };
+    const user = { hashedTwitterId: decoded.hashedTwitterId };
     req.user = user;
     return next();
   } catch (error) {

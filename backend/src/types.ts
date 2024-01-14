@@ -1,8 +1,7 @@
 import { JwtPayload } from 'jsonwebtoken';
 
-export interface RequestUserPayload {
-  hashedTwitterId: string;
-  _id: string;
+export interface AuthUser {
+  hashedTwitterId?: string;
 }
 
-export interface MyJwtPayload extends JwtPayload, RequestUserPayload {}
+export interface MyJwtPayload extends JwtPayload, AuthUser {}

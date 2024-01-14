@@ -4,7 +4,7 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import User from '../db/models/User';
 import isAuth from '../auth/isAuth';
-import { MyJwtPayload, RequestUserPayload } from '../types';
+import { MyJwtPayload, AuthUser } from '../types';
 import Message from '../db/models/Message';
 import { Profile } from 'passport-twitter';
 import { semaphoreInstance } from '../Semaphore';
@@ -59,20 +59,14 @@ export default (app: Express): void => {
         );
       }
 
-      const initUsername = 'Anonymous_' + (Date.now() % 10000);
       user = await new User({
         hashedId: hashedTwitterId,
-        username: initUsername,
       }).save();
       semaphoreInstance.addMember(hashedTwitterId);
 
-      const token = jwt.sign(
-        { hashedTwitterId, _id: user._id },
-        process.env.JWT_SECRET!,
-        {
-          expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SECONDS as string),
-        }
-      );
+      const token = jwt.sign({ hashedTwitterId }, process.env.JWT_SECRET!, {
+        expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SECONDS as string),
+      });
       // uncomment in prod
       // res.set('Authorization', `Bearer ${token}`);
       // res.redirect(`${process.env.CLIENT_URL}/`);
@@ -87,7 +81,6 @@ export default (app: Express): void => {
       {
         hashedTwitterId:
           '1a1911af10e60c10b19e911e1d6a98d084e503477fd7ccf8f881d298834418c3',
-        _id: '6584d62de0e3de613600ea67',
       },
       process.env.JWT_SECRET!,
       {
@@ -96,19 +89,6 @@ export default (app: Express): void => {
     );
 
     return res.status(200).json(token);
-  });
-
-  app.get('/me', isAuth, async (req, res) => {
-    const userId = (req.user as MyJwtPayload)._id;
-
-    const user = await User.findById(userId, { username: 1, _id: 0 });
-    const username = user?.username;
-
-    if (!username) {
-      return res.status(404).json('User not found!');
-    }
-
-    return res.status(200).json({ username });
   });
 
   app.get('/messages', isAuth, async (req, res) => {
@@ -122,35 +102,20 @@ export default (app: Express): void => {
       sentAt: { $lt: new Date(before) },
     })
       .sort({ sentAt: -1 })
-      .limit(messagesLimit)
-      .populate('from', 'username');
+      .limit(messagesLimit);
 
     res.status(200).json(messages);
   });
 
-  app.get('generateProof', isAuth, async (req, res) => {
-    // return semaphoreInstance.getProof();
-  });
-
-  app.post('/changeUsername', isAuth, async (req, res) => {
-    const _reqUser = req.user as RequestUserPayload;
-    const newUsername = (req.body?.username as string)?.trim();
-
-    if (!newUsername) {
-      return res.status(422).json({ error: 'Username is required!' });
+  app.get('/generateProof', isAuth, async (req, res) => {
+    const user = req.user as AuthUser;
+    const hashedTwitterId = user.hashedTwitterId;
+    if (!hashedTwitterId) {
+      return res.status(403).json({ error: 'Not allowed!' });
     }
+    const proof = await semaphoreInstance.getProof(hashedTwitterId);
 
-    const userDB = await User.findByIdAndUpdate(_reqUser._id, {
-      username: newUsername,
-    });
-
-    if (!userDB) {
-      return res
-        .status(404)
-        .json({ error: "Couldn't update user's username!" });
-    }
-
-    return res.status(200).json(userDB.username);
+    return res.status(200).json(proof);
   });
 
   app.post('/verifyProof', async (req, res) => {
@@ -159,9 +124,12 @@ export default (app: Express): void => {
     const isValidProof = await semaphoreInstance.checkProof(proof);
 
     if (isValidProof) {
-      // return response 200 with jwt
+      const token = jwt.sign({}, process.env.JWT_SECRET!, {
+        expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SECONDS as string),
+      });
+      return res.status(200).json(token);
     } else {
-      // return reponse 401 Invalid proof
+      return res.status(401).json({ status: 'Invalid proof!' });
     }
   });
 };
