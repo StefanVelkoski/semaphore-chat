@@ -25,12 +25,13 @@ The app focuses on providing a private and trustworthy platform for users to eng
 
 2. **Identity**
    - Upon successful authentication, users receive unique "ZK-keys" as their private identity.
-   - Users can store their commitments locally or opt for the app to securely store them in local storage.
+   - Users can store their commitments locally, while initally the app stores them in the user's browser.
      
 3. **Anonymity**
-   - Access the chat with an anonymous random nickname after login, preserving user privacy.
+   - User participates in the chat anonymously.
 
 4. **Security**
-   - Loss of keys prevents users from rejoining the chat or creating a new account.
-   - The merkle tree root is stored in the database
+   - The ZK keys are generated on the client side 
+   - Loss of keys prevents users from rejoining the chat or creating a new account
+   - Only the merkle tree root of the chat group is stored in the database.
 
