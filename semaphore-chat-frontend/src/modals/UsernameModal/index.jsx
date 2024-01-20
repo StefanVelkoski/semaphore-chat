@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ActionButton from '../../components/ActionButton';
 
 const UsernameChangeModal = ({ isOpen, onClose, onSave }) => {
     const [newUsername, setNewUsername] = useState('');
@@ -11,8 +12,17 @@ const UsernameChangeModal = ({ isOpen, onClose, onSave }) => {
     return (
         isOpen && (
             <div className="fixed inset-0 flex justify-center items-center z-50">
-                <div className="bg-white rounded-lg p-4 w-1/3 border border-gray-300"> 
-                    <h2 className="text-xl font-semibold mb-4">Change Username</h2>
+                <div className="bg-white rounded-lg p-4 w-1/3 border border-gray-300">
+                    <div className="flex justify-between items-start mb-4">
+                        <h2 className="text-xl font-semibold">Change Username</h2>
+                        <button
+                            className="text-red-500 hover:text-red-700 text-2xl leading-none"
+                            onClick={onClose}
+                            style={{ cursor: 'pointer' }}
+                        >
+                            &times;
+                        </button>
+                    </div>
                     <input
                         type="text"
                         placeholder="New Username"
@@ -21,12 +31,9 @@ const UsernameChangeModal = ({ isOpen, onClose, onSave }) => {
                         className="border border-gray-300 rounded p-2 w-full mb-4"
                     />
                     <div className="flex justify-end">
-                        <button onClick={onClose} className="mr-4 text-gray-500 hover:text-gray-700">
-                            Cancel
-                        </button>
-                        <button onClick={handleSave} className="bg-blue-500 text-white px-4 py-2 rounded">
+                        <ActionButton onClick={handleSave}>
                             Save
-                        </button>
+                        </ActionButton>
                     </div>
                 </div>
             </div>

@@ -25,26 +25,28 @@ export default function Login() {
     };
 
     return (
-        <div className="login-container bg-custom-login-bg">
-            <div className="flex justify-center items-center h-screen">
-                <div className="flex flex-col space-y-4 items-center">
-                    <div className="flex w-full justify-center">
-                        <ActionButton className="flex-grow" onClick={handleTwitterAuth} disabled={showLoginInput}>
-                            Login with X
-                        </ActionButton>
-                    </div>
-                    <div className="flex w-full justify-center">
-                        <ActionButton className="flex" onClick={handleLoginToggle}>
-                            Login
-                        </ActionButton>
-                    </div>
-                    {showLoginInput && (
-                        <div className="flex flex-col items-center">
-                            <input className="mb-2 p-2 border border-gray-300 rounded w-full max-w-xs" type="text" placeholder="ZK proof" />
-                            <ActionButton onClick={handleProofLogin}>Submit</ActionButton>
-                        </div>
-                    )}
+        <div className="login-container bg-custom-login-bg h-screen flex justify-center items-center">
+            <div className="flex flex-col items-center w-full max-w-xs space-y-4">
+                <div className="w-full mb-2 p-2">
+                    <ActionButton onClick={handleTwitterAuth} disabled={showLoginInput}>
+                        Login with X
+                    </ActionButton>
                 </div>
+                <div className="w-full mb-2 p-2">
+                    <ActionButton onClick={handleLoginToggle}>
+                        Login
+                    </ActionButton>
+                </div>
+                {showLoginInput && (
+                    <div className="flex flex-col items-center w-full">
+                        <input className="mb-2 p-2 border border-gray-300 rounded w-full" type="text" placeholder="ZK proof" />
+                        <div className="w-full mb-2 p-2">
+                            <ActionButton onClick={handleProofLogin}>
+                                Submit
+                            </ActionButton>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

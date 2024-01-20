@@ -1,11 +1,12 @@
 import React from 'react';
 import './styles.css';
 
-const ActionButton = ({ children, onClick }) => {
+const ActionButton = ({ children, onClick, disabled }) => {
     return (
         <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full custom-button"
+            className={`w-full py-2 text-white bg-custom-button hover:bg-custom-button-hover rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={onClick}
+            disabled={disabled}
         >
             {children}
         </button>
