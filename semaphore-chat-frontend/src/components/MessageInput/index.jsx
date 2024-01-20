@@ -14,11 +14,11 @@ const MessageInput = () => {
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Type a message..."
-                className="border p-2 flex-grow rounded-l-lg" 
+                className="border p-2 flex-grow rounded-l-lg"
             />
             <button
                 onClick={handleSendMessage}
-                className="bg-blue-500 text-white p-2 rounded-r-lg" 
+                className="bg-custom-button hover:bg-custom-button-hover text-white p-2 rounded-r-lg"
             >
                 Send
             </button>
