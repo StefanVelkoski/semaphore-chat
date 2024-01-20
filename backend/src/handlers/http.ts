@@ -132,4 +132,9 @@ export default (app: Express): void => {
       return res.status(401).json({ status: 'Invalid proof!' });
     }
   });
+
+
+  app.get('/getGroupInfo', isAuth, async (req, res) => {
+
+  });
 };

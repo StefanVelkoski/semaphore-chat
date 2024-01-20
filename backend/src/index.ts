@@ -27,7 +27,7 @@ const io = new Server(httpServer, {
 });
 
 app.use(passport.initialize());
-require('../src/auth/passport-twitter');
+require('./auth/passport-twitter');
 socketAuth(io);
 
 // Middleware
