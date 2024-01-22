@@ -10,6 +10,7 @@ const GetProofModal = ({ isOpen, onClose }) => {
     };
 
     const handleDownloadTextFile = () => {
+
     };
 
     return (
@@ -27,10 +28,10 @@ const GetProofModal = ({ isOpen, onClose }) => {
                         </button>
                     </div>
                     <div className={styles.buttonContainer}>
-                        <button className={styles.icon} onClick={handleCopyToClipboard}>
+                        {/* <button className={styles.icon} onClick={handleCopyToClipboard}>
                             <img src={copyToClipboardIcon} alt="Copy to Clipboard" />
                             <span>Copy</span>
-                        </button>
+                        </button> */}
                         <button className={styles.icon} onClick={handleDownloadTextFile}>
                             <img src={downloadTextFileIcon} alt="Download Text File" />
                             <span>Download</span>
