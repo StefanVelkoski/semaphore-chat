@@ -3,15 +3,28 @@ import downloadTextFileIcon from '../../assets/download-text-file.svg';
 import copyToClipboardIcon from '../../assets/copy-to-clipboard.svg';
 import styles from './GetProofModal.module.css';
 
-const GetProofModal = ({ isOpen, onClose }) => {
+const GetProofModal = ({ isOpen, onClose, proof }) => {
     const [showModal, setShowModal] = useState(false);
 
     const handleCopyToClipboard = () => {
     };
 
     const handleDownloadTextFile = () => {
-
+        const jsonProof = JSON.stringify(proof, (key, value) =>
+            typeof value === 'bigint'
+                ? value.toString()
+                : value
+            , 2);
+        const blob = new Blob([jsonProof], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'proof.txt';
+        link.click();
+        URL.revokeObjectURL(url);
     };
+
+
 
     return (
         isOpen && (
@@ -26,6 +39,10 @@ const GetProofModal = ({ isOpen, onClose }) => {
                         >
                             &times;
                         </button>
+                    </div>
+                    <div>
+                        <h6 className="text-sm text-red-500">Important: Please store your proof securely. It is essential for accessing your account and cannot be recovered if lost.
+                        </h6>
                     </div>
                     <div className={styles.buttonContainer}>
                         {/* <button className={styles.icon} onClick={handleCopyToClipboard}>

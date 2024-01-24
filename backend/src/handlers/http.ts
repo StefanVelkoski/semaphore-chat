@@ -19,7 +19,9 @@ export default (app: Express): void => {
   app.get('/', (req: Request, res: Response): void => {
     res.send('Welcome to Express & TypeScript Server');
   });
+
   app.get('/auth/twitter', passport.authenticate('twitter'));
+
   app.get(
     '/auth/twitter/callback',
     passport.authenticate('twitter', { session: false }),
@@ -28,23 +30,23 @@ export default (app: Express): void => {
       const twitterUserJson: { verified: boolean; followers_count: number } =
         twitterUser._json;
 
-      if (
-        !(
-          twitterUserJson.verified ||
-          twitterUserJson.followers_count > minTwitterFollowers
-        )
-      ) {
-        // uncomment in prod
-        //  return res.redirect(
-        //    `${process.env.CLIENT_URL}?error=twitter_requirements`
-        //  );
+      // if (
+      //   !(
+      //     twitterUserJson.verified ||
+      //     twitterUserJson.followers_count > minTwitterFollowers
+      //   )
+      // ) {
+      //   // uncomment in prod
+      //   //  return res.redirect(
+      //   //    `${process.env.CLIENT_URL}?error=twitter_requirements`
+      //   //  );
 
-        // delete the line below in prod
-        return res.status(405).json({
-          error:
-            'A twitter user must have more than 100 followers or be verified!',
-        });
-      }
+      //   // delete the line below in prod
+      //   return res.status(405).json({
+      //     error:
+      //       'A twitter user must have more than 100 followers or be verified!',
+      //   });
+      //}
 
       const hashedTwitterId = crypto
         .createHash('sha256')
@@ -71,9 +73,12 @@ export default (app: Express): void => {
       // res.redirect(`${process.env.CLIENT_URL}/`);
 
       // delete the line below in prod
-      return res.status(200).json(`Bearer ${token}`);
+      // return res.status(200).json(`Bearer ${token}`);
+      return res.redirect(`${process.env.CLIENT_URL}get-proof?token=${token}`);
+
     }
   );
+
   app.get('/generateToken', (req, res) => {
 
     //if the verification is true grant the user a token to be able to access the app

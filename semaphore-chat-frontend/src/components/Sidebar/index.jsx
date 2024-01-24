@@ -3,10 +3,12 @@ import React, { useState, useEffect } from "react";
 import UsernameChangeModal from '../../modals/UsernameModal'
 import GetProofModal from '../../modals/GetProofModal'
 import GenerateProofModal from '../../modals/GenerateProof';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
-    const usernames = ['Zmaj'];
+    const navigate = useNavigate();
 
+    const [currentUsername, setCurrentUsername] = useState('');
 
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,6 +26,7 @@ const Sidebar = () => {
 
     const handleUsernameChange = (newUsername) => {
         console.log(`Username changed to ${newUsername}`);
+        setCurrentUsername(newUsername);
     };
 
 
@@ -46,15 +49,19 @@ const Sidebar = () => {
         setIsGenerateProofModalOpen(false);
     };
 
+    const handleLogout = () => {
+        sessionStorage.removeItem('newUsername');
+        localStorage.clear();
+
+        navigate('/');
+    };
 
     return (
         <div className="w-64 border-r p-4 flex flex-col">
-            {usernames.map((username) => (
-                <div key={username} className="mb-2 p-2 border-b flex flex-col">
-                    <div>{username}</div>
+            <div className="mb-2 p-2 border-b flex flex-col">
+                <div>{currentUsername}</div>
 
-                </div>
-            ))}
+            </div>
 
             <div className="mb-2 p-2 border-b flex flex-col">
                 <ActionButton onClick={handleOpenModal}>Change Username</ActionButton>
@@ -68,7 +75,7 @@ const Sidebar = () => {
             <div className="flex-grow"></div>
 
             <div className="mb-2 p-2 border-b flex flex-col">
-                <ActionButton onClick={() => console.log(`Logout `)}>Logout</ActionButton>
+                <ActionButton onClick={handleLogout}>Logout</ActionButton>
             </div>
             <UsernameChangeModal isOpen={isModalOpen} onClose={handleCloseModal} onSave={handleUsernameChange} />
             <GetProofModal isOpen={isGetProofModalOpen} onClose={handleCloseGetProofModal} />

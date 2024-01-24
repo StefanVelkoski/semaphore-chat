@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import ActionButton from '../../components/ActionButton';
 
 const UsernameChangeModal = ({ isOpen, onClose, onSave }) => {
-    const [newUsername, setNewUsername] = useState('');
+    const [newUsername, setNewUsername] = useState(() => {
+        return sessionStorage.getItem('newUsername') || '';
+    });
 
     const handleSave = () => {
         onSave(newUsername);
+        sessionStorage.setItem('newUsername', newUsername);
         onClose();
     };
 
