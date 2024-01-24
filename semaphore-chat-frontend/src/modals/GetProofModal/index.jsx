@@ -10,11 +10,17 @@ const GetProofModal = ({ isOpen, onClose, proof }) => {
     };
 
     const handleDownloadTextFile = () => {
-        const jsonProof = JSON.stringify(proof, (key, value) =>
-            typeof value === 'bigint'
-                ? value.toString()
-                : value
-            , 2);
+        
+        const replacerFunction = (key, value) => {
+            if (typeof value === 'bigint') {
+                return value.toString(); 
+            } else if (value instanceof Map) {
+                return Array.from(value.entries()); 
+            }
+            return value;
+        };
+    
+        const jsonProof = JSON.stringify(proof, replacerFunction, 2);
         const blob = new Blob([jsonProof], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

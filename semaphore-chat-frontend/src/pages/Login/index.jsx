@@ -14,6 +14,7 @@ export default function Login() {
     const [showLoginInput, setShowLoginInput] = useState(false);
     const [proofValue, setProofValue] = useState('');
     const [uploadedFile, setUploadedFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
 
     const navigate = useNavigate();
@@ -56,20 +57,33 @@ export default function Login() {
 
     const handleProofLogin = async () => {
         if (uploadedFile) {
+            setIsLoading(true);
             const reader = new FileReader();
             reader.onload = async (event) => {
                 try {
                     const fileContent = event.target.result;
                     const proofObject = JSON.parse(fileContent);
-                    const verified = await verifyProof(proofObject, 16);
 
+                    if (Array.isArray(proofObject.proof.publicInputs)) {
+                        proofObject.proof.publicInputs = new Map(proofObject.proof.publicInputs);
+                    }
+
+                    if (typeof proofObject.proof.proof === 'object' && !Array.isArray(proofObject.proof.proof)) {
+                        proofObject.proof.proof = Object.values(proofObject.proof.proof);
+                    }
+
+                    console.log("before awaiting verify");
+                    const verified = await verifyProof(proofObject, 16);
+                    console.log(verified);
                     if (verified) {
 
                         navigate('/chat');
                     } else {
                         console.log('Proof verification failed');
                     }
+                    setIsLoading(false);
                 } catch (error) {
+                    setIsLoading(false);
                     console.error('Error processing proof:', error);
                 }
             };
@@ -105,8 +119,12 @@ export default function Login() {
                                 onChange={handleFileChange}
                                 className="mb-2 p-2 border border-gray-300 rounded w-full"
                             />
-                            <ActionButton onClick={handleProofLogin}>
-                                Submit
+                            <ActionButton onClick={handleProofLogin} disabled={isLoading}>
+                                {isLoading ? (
+                                    <div className="loader"></div>
+                                ) : (
+                                    "Submit"
+                                )}
                             </ActionButton>
                         </div>
                     </div>
