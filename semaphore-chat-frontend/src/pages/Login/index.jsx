@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { generateProof, verifyProof } from "@semaphore-noir/proof"
 import { utils } from "ethers"
 import GenerateProofModal from "../../modals/GenerateProof";
+import './styles.css';
+
 
 
 export default function Login() {
@@ -45,8 +47,9 @@ export default function Login() {
         }
     };
 
-    const handleLoginToggle = async (proof) => {
+    const handleLoginToggle = async () => {
         setShowLoginInput(!showLoginInput);
+        setErrorMessage('');
     };
 
 
@@ -56,6 +59,10 @@ export default function Login() {
     };
 
     const handleProofLogin = async () => {
+        if (!uploadedFile) {
+            setErrorMessage('Please upload a proof file.');
+            return;
+        }
         if (uploadedFile) {
             setIsLoading(true);
             const reader = new FileReader();
@@ -76,15 +83,34 @@ export default function Login() {
                     const verified = await verifyProof(proofObject, 16);
                     console.log(verified);
                     if (verified) {
+                        fetch('http://localhost:8000/generateToken', {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.text();
+                            })
+                            .then(token => {
+                                localStorage.setItem('jwtToken', token);
+                                console.log(localStorage.getItem('jwtToken'));
+                                navigate('/chat');
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                            });
 
-                        navigate('/chat');
                     } else {
                         console.log('Proof verification failed');
                     }
-                    setIsLoading(false);
                 } catch (error) {
                     setIsLoading(false);
                     console.error('Error processing proof:', error);
+                    setErrorMessage('Error processing proof.');
                 }
             };
             reader.readAsText(uploadedFile);
@@ -111,7 +137,9 @@ export default function Login() {
                 </div>
                 {showLoginInput && (
                     <div className="flex flex-col items-center w-full">
-                        <input className="mb-2 p-2 border border-gray-300 rounded w-full" type="text" placeholder="ZK proof" />
+                        <div className="w-full mb-2 p-2">
+                            <p className="text-center text-gray-600">Upload your proof</p>
+                        </div>
                         <div className="w-full mb-2 p-2">
                             <input
                                 type="file"
@@ -119,9 +147,13 @@ export default function Login() {
                                 onChange={handleFileChange}
                                 className="mb-2 p-2 border border-gray-300 rounded w-full"
                             />
-                            <ActionButton onClick={handleProofLogin} disabled={isLoading}>
+                            <ActionButton className="flex justify-center items-center"
+                                onClick={handleProofLogin} disabled={isLoading}>
                                 {isLoading ? (
-                                    <div className="loader"></div>
+                                    <>
+                                        <div className="loader"></div>
+                                        <span>Verifying</span>
+                                    </>
                                 ) : (
                                     "Submit"
                                 )}

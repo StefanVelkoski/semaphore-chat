@@ -95,7 +95,8 @@ export default (app: Express): void => {
 
     return res.status(200).json(token);
   });
-  app.get('/messages', isAuth, async (req, res) => {
+
+  app.get('/messages', async (req, res) => {
     let before = req.query.before as string;
 
     if (isNaN(Date.parse(before))) {

@@ -69,9 +69,12 @@ const Sidebar = () => {
             <div className="mb-2 p-2 border-b flex flex-col">
                 <ActionButton onClick={handleOpenGetProofModal}>Get Proof</ActionButton>
             </div>
-            <div className="mb-2 p-2 border-b flex flex-col">
-                <ActionButton onClick={handleOpenGenerateProofModal}>Generate Proof</ActionButton>
-            </div>
+            {/*
+                <div className="mb-2 p-2 border-b flex flex-col">
+                    <ActionButton onClick={handleOpenGenerateProofModal}>Generate Proof</ActionButton>
+                </div>
+    */}
+
             <div className="flex-grow"></div>
 
             <div className="mb-2 p-2 border-b flex flex-col">
