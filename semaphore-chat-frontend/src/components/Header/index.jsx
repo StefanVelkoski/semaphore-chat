@@ -2,7 +2,7 @@ import React from 'react';
 
 const Header = () => {
     return (
-        <header className="text-left text-sm p-4 bg-custom-login-bg w-full italic">
+        <header className="text-left text-sm p-4 bg-custom-login-bg w-full italic fontSize-30">
             <h1>Semaphore Chat App</h1>
         </header>
     );

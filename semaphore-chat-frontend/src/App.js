@@ -19,7 +19,7 @@ function App() {
         <Footer className='flex-none' />
       </div>
     </Router>
-  );
+  )
 }
 
 export default App;

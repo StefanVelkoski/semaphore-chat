@@ -83,26 +83,26 @@ export default function Login() {
                     const verified = await verifyProof(proofObject, 16);
                     console.log(verified);
                     if (verified) {
-                        fetch('http://localhost:8000/generateToken', {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(`HTTP error! status: ${response.status}`);
-                                }
-                                return response.text();
-                            })
-                            .then(token => {
-                                localStorage.setItem('jwtToken', token);
-                                console.log(localStorage.getItem('jwtToken'));
-                                navigate('/chat');
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                            });
+                        // fetch('http://localhost:8000/generateToken', {
+                        //     method: 'GET',
+                        //     headers: {
+                        //         'Content-Type': 'application/json'
+                        //     }
+                        // })
+                        //     .then(response => {
+                        //         navigate('/chat');
+                        //     })
+                        //     // .then(token => {
+                        //     //     localStorage.setItem('jwtToken', token);
+                        //     //     console.log(localStorage.getItem('jwtToken'));
+                        //     //     navigate('/chat');
+                        //     // })
+                        //     .catch(error => {
+                        //         console.error('Error:', error);
+                        //     });
+
+                        navigate('/chat');
+
 
                     } else {
                         console.log('Proof verification failed');

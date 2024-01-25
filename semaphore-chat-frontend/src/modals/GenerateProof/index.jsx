@@ -35,18 +35,16 @@ const GenerateProofModal = ({ isOpen, onClose }) => {
         const proof = await generateProof(identity, group, externalNullifier, signal)
         console.log(proof)
         console.log("proof proof", proof.proof)
-        
+
         const verified = await verifyProof(proof, 16)
 
 
         console.log('verified proof', verified)
 
-        //setProof(proof.proof.proof)
-
-        //setProof(proof.proof)
         setProof(proof)
 
         setIsLoading(false);
+
         setShowGetProofModal(true);
 
     }
@@ -59,19 +57,19 @@ const GenerateProofModal = ({ isOpen, onClose }) => {
     return (
         <>
 
-            {isOpen && (
+            {isOpen && !showGetProofModal && (
                 <div className="fixed inset-0 flex justify-center items-center z-50">
                     <div className={`bg-white rounded-lg p-4 border border-gray-300 ${styles.modal}`}>
                         <div className={styles.header}>
                             <h2 className="text-xl font-semibold">Generate Proof</h2>
                         </div>
                         <div>
-                            <h6 className="text-sm text-red-500">Important: Do not close this page while your proof is generating, otherwise it will be lost.</h6>
+                            <h6 className="text-sm text-red-500 mb-10">Important: Do not close this page while your proof is generating, otherwise it will be lost.</h6>
                         </div>
                         <div>
                             {isLoading ? (
                                 <div>
-                                    <span>Generating...</span>
+                                    <span className="mr-4">Proof generation in progress</span>
                                     <div className={`${styles.loader}`}></div>
                                 </div>
                             ) : (
@@ -90,6 +88,7 @@ const GenerateProofModal = ({ isOpen, onClose }) => {
             )};
             {showGetProofModal && (
                 <GetProofModal isOpen={showGetProofModal} onClose={handleGetProofClose} proof={Proof} />
+
             )}
         </>
 

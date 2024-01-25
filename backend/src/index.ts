@@ -23,7 +23,6 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
-    credentials:true,
   },
 });
 
@@ -31,18 +30,10 @@ app.use(passport.initialize());
 require('./auth/passport-twitter');
 socketAuth(io);
 
-app.options('*', cors());
-
-
 // Middleware
 app.use(express.json());
-//app.use(cors({ origin: clientURL}));
-app.use(cors({
-  origin: clientURL,
-  credentials: true 
- }));
+app.use(cors({ origin: ['http://localhost:3000', 'http://localhost:5500', '*'] }));
 app.use(session({ secret: 'secret' }));
-
 
 handleHTTP(app);
 handleWebSocket(io);
