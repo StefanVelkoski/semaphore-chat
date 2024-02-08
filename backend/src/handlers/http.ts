@@ -9,6 +9,8 @@ import Message from '../db/models/Message';
 import { Profile } from 'passport-twitter';
 import { semaphoreInstance } from '../Semaphore';
 import Group from '../db/models/Group';
+import { Identity } from "@semaphore-protocol/identity"
+import { verifyProof } from "@semaphore-noir/proof"
 
 const messagesLimit = 30;
 const minTwitterFollowers = parseInt(
@@ -26,27 +28,11 @@ export default (app: Express): void => {
     '/auth/twitter/callback',
     passport.authenticate('twitter', { session: false }),
     async (req, res) => {
-      const twitterUser = req.user as Profile;
-      const twitterUserJson: { verified: boolean; followers_count: number } =
-        twitterUser._json;
+       const twitterUser = req.user as Profile;
+      // // const twitterUserJson: { verified: boolean; followers_count: number } =
+      // //   twitterUser._json;
 
-      // if (
-      //   !(
-      //     twitterUserJson.verified ||
-      //     twitterUserJson.followers_count > minTwitterFollowers
-      //   )
-      // ) {
-      //   // uncomment in prod
-      //   //  return res.redirect(
-      //   //    `${process.env.CLIENT_URL}?error=twitter_requirements`
-      //   //  );
 
-      //   // delete the line below in prod
-      //   return res.status(405).json({
-      //     error:
-      //       'A twitter user must have more than 100 followers or be verified!',
-      //   });
-      //}
 
       const hashedTwitterId = crypto
         .createHash('sha256')
@@ -60,10 +46,10 @@ export default (app: Express): void => {
         );
       }
 
-      user = await new User({
-        hashedId: hashedTwitterId,
-      }).save();
-      semaphoreInstance.addMember(hashedTwitterId);
+      // user = await new User({
+      //   hashedId: hashedTwitterId,
+      // }).save();
+      // //semaphoreInstance.addMember(hashedTwitterId);
 
       const token = jwt.sign({ hashedTwitterId }, process.env.JWT_SECRET!, {
         expiresIn: parseInt(process.env.JWT_EXPIRES_IN_SECONDS as string),
@@ -74,10 +60,81 @@ export default (app: Express): void => {
 
       // delete the line below in prod
       // return res.status(200).json(`Bearer ${token}`);
-      return res.redirect(`${process.env.CLIENT_URL}get-proof?token=${token}`);
+      return res.redirect(`${process.env.CLIENT_URL}/?token=${token}`);
 
     }
   );
+
+  app.post('/addMember', async (req,res) => {
+    console.log(req.body)
+    const { commitment } = req.body; 
+
+    if (!commitment) {
+      return res.status(400).json({ message: 'Commitment is required.' });
+  }
+  const groupId = 1;
+  try {
+    let group = await Group.findOne({ Id: groupId });
+
+    if (!group) {
+        console.log('Group not found, creating a new one...');
+        group = new Group({
+            Id: groupId,
+            treeDepth: 16, 
+            members: []
+        });
+        await group.save();
+    }
+
+    if (group.members.includes(commitment)) {
+        return res.status(409).json({ message: 'Member already exists in the group.' });
+    }
+
+    group.members.push(commitment);
+    await group.save();
+
+    res.status(201).json({ message: 'Member successfully added to the group.', group });
+} catch (error) {
+    console.error('Error adding member to group:', error);
+    res.status(500).json({ message: 'Failed to add member to the group.', error });
+}
+  });
+
+  app.post('/register', async (req,res) => {
+    const { password } = req.body;
+
+    if (!password || password.length < 4) {
+      return res.status(400).json({ message: 'Password is required and must be at least 8 characters long.' });
+  }
+
+
+    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    
+    try {
+      const commitment = semaphoreInstance.addMember(hashedPassword);
+
+      let group = await Group.findOne({ Id: 1 });
+      if (!group) {
+          group = new Group({
+              Id: 1,
+              treeDepth: 16,
+              members: [],
+          });
+      }
+
+      if (!group.members.includes(commitment)) {
+          group.members.push(commitment);
+          await group.save();
+          res.status(201).json({ message: 'User successfully added to the group.' });
+      } else {
+          res.status(409).json({ message: 'This member is already part of the group.' });
+      }
+    } catch (error) {
+      console.error('Error in registration:', error);
+      res.status(500).json({ error: 'Registration failed.' });
+  }
+    
+  });
 
   app.get('/generateToken', (req, res) => {
 
@@ -112,6 +169,49 @@ export default (app: Express): void => {
     res.status(200).json(messages);
   });
 
+  app.get('/group', async (req, res) => {
+    try {
+        const group = await Group.findOne({ Id: 1 }); 
+        if (!group) {
+            return res.status(404).json({ message: 'Group not found' });
+        }
+        res.json(group); 
+    } catch (error) {
+        console.error('Failed to retrieve group:', error);
+        res.status(500).json({ message: 'Failed to retrieve group information' });
+    }
+});
+
+app.post('/login', async (req, res) => {
+  console.log('calling login')
+  const { fullProof } = req.body;
+  //console.log('Received fullProof:', fullProof);
+
+  const proofObject = JSON.parse(fullProof);
+
+  if (Array.isArray(proofObject.proof.publicInputs)) {
+      proofObject.proof.publicInputs = new Map(proofObject.proof.publicInputs);
+  }
+
+  if (typeof proofObject.proof.proof === 'object' && !Array.isArray(proofObject.proof.proof)) {
+      proofObject.proof.proof = Object.values(proofObject.proof.proof);
+  }
+  try {
+    console.log('Verifying proof...'); 
+      const isValid = await verifyProof(proofObject, 16); 
+
+      if (isValid) {
+        console.log('Proof verified successfully.');
+          res.json({ message: 'Proof verified successfully' });
+      } else {
+        console.log('Invalid proof.'); 
+          res.status(400).json({ message: 'Invalid proof' });
+      }
+  } catch (error) {
+      console.error('Proof verification failed:', error);
+      res.status(500).json({ message: 'Error verifying proof' });
+  }
+});
   // app.get('/generateProof', isAuth, async (req, res) => {
   //   const user = req.user as AuthUser;
   //   const hashedTwitterId = user.hashedTwitterId;
@@ -157,31 +257,5 @@ export default (app: Express): void => {
     }
   });
 
-  // this will occur only on the first X authentication
-
-  app.post('/addMember', async (req, res) => {
-    const groupId = req.body?.id;
-    const members = req.body?.members;
-    const treeDepth = req.body?.treeDepth;
-
-    try {
-      let group = await Group.findOne({ Id: groupId });
-
-      if (group) {
-        // Update the group with new parameters
-        group.members = members;
-        group.treeDepth = treeDepth;
-
-        // Save the updated group to the database
-        await group.save();
-
-        return res.status(200).json({ message: 'Group updated successfully', group });
-      } else {
-        return res.status(404).json({ message: 'Group not found' });
-      }
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: 'Internal server error' });
-    }
-  })
+  
 };

@@ -1,29 +1,168 @@
 import React, { useEffect, useState } from "react";
 import ActionButton from '../../components/ActionButton'
 import { useNavigate } from 'react-router-dom';
+import './styles.css';
+import { SHA256 } from 'crypto-js';
+import { Identity } from '@semaphore-protocol/identity';
+import { Group } from "@semaphore-protocol/group"
 import { generateProof, verifyProof } from "@semaphore-noir/proof"
 import { utils } from "ethers"
-import GenerateProofModal from "../../modals/GenerateProof";
-import './styles.css';
 
+const hashPassword = (password) => {
+    return SHA256(password.trim()).toString();
+};
 
+const fetchGroupData = async () => {
+    try {
+        const response = await fetch('http://localhost:8000/group');
+        if (!response.ok) throw new Error('Failed to fetch group data');
+        const groupData = await response.json();
+        console.log(groupData)
+        return groupData;
+    } catch (error) {
+        console.error('Error fetching group data:', error);
+    }
+};
 
 export default function Login() {
-
-    const [showGenerateProofModal, setShowGenerateProofModal] = useState(false);
+    const [action, setAction] = useState('');
+    const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
     const [showLoginInput, setShowLoginInput] = useState(false);
-    const [proofValue, setProofValue] = useState('');
-    const [uploadedFile, setUploadedFile] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
+
+    const handleActionSelect = (selectedAction) => {
+        setAction(selectedAction);
+        setErrorMessage('');
+    };
+
+    const handleRegister = async () => {
+        if (!password) {
+            setErrorMessage("Password is required");
+            return;
+        }
+
+        console.log('Register with:', password);
+        const hashedPassword = hashPassword(password);
+        const registerUrl = `http://localhost:8000/addMember`;
+        const identity = new Identity(hashedPassword);
+        const commitment = identity.getCommitment();
+        try {
+            const response = await fetch(registerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ commitment }, (key, value) =>
+                    typeof value === 'bigint' ? value.toString() : value
+                ),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Registration successful:', data);
+                navigate('/chat');
+            } else {
+                setErrorMessage(data.error || 'Registration failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Failed to register:', error);
+            setErrorMessage('Registration failed. Please try again.');
+        }
+    };
+
+    const handlePasswordChange = (event) => {
+        setPassword(event.target.value);
+    };
+
+    const handleLogin = async () => {
+        console.log('Login with:', password);
+
+        if (!password) {
+            setErrorMessage("Password is required");
+            return;
+        }
+        setLoading(true);
+        console.log('Logging in...');
+
+        const hashedPassword = hashPassword(password);
+        const identity = new Identity(hashedPassword);
+
+        const groupData = await fetchGroupData();
+        if (!groupData) return;
+
+        const { Id: groupID, treeDepth, members } = groupData;
+        const group = new Group(groupID, treeDepth, members);
+        console.log(groupData)
+
+        console.log(group)
+
+        const externalNullifier = utils.formatBytes32String("Topic");
+        const signal = utils.formatBytes32String("Hello world");
+
+        const fullProof = await generateProof(identity, group, externalNullifier, signal);
+
+        const verified = await verifyProof(fullProof, 16)
+        console.log(verified)
+
+        console.log("before", fullProof)
+
+        const replacerFunction = (key, value) => {
+            if (typeof value === 'bigint') {
+                return value.toString();
+            } else if (value instanceof Map) {
+                return Array.from(value.entries());
+            }
+            return value;
+        };
+
+        // Stringify proof object with replacer function
+        const jsonProof = JSON.stringify(fullProof, replacerFunction, 2)
+
+
+        //const fullProofString = JSON.stringify(fullProof);
+
+
+        //console.log("after", fullProof)
+        try {
+            console.log("here")
+            const response = await fetch('http://localhost:8000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ fullProof: jsonProof }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+
+                setLoading(false);
+                console.log('Proof verified successfully:', data);
+                navigate('/chat');
+            } else {
+                setErrorMessage(data.message || 'Proof verification failed');
+            }
+        } catch (error) {
+            console.error('Failed to send proof to backend:', error);
+            setErrorMessage('Error verifying proof');
+        }
+    };
+
+    const handleConnectWithX = () => {
+        const twitterAuthUrl = `http://localhost:8000/auth/twitter`;
+        window.location.href = twitterAuthUrl;
+    };
 
     useEffect(() => {
         const urlParam = new URLSearchParams(window.location.search);
         const error = urlParam.get('error');
+        const token = urlParam.get('token');
 
         if (error) {
             if (error === 'already_registered') {
@@ -31,91 +170,12 @@ export default function Login() {
                 setTimeout(() => navigate('/'), 1000);
             }
         }
+        if (token) {
+            localStorage.setItem('authToken', token);
+            setAction('register');
+        }
+
     }, [navigate]);
-
-    const handleTwitterAuth = () => {
-        if (!showLoginInput) {
-            const twitterAuthUrl = `http://localhost:8000/auth/twitter`;
-            window.location.href = twitterAuthUrl;
-        }
-    };
-
-    const handleFileChange = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            setUploadedFile(file);
-        }
-    };
-
-    const handleLoginToggle = async () => {
-        setShowLoginInput(!showLoginInput);
-        setErrorMessage('');
-    };
-
-
-
-    const closeGenerateProofModal = () => {
-        setShowGenerateProofModal(false);
-    };
-
-    const handleProofLogin = async () => {
-        if (!uploadedFile) {
-            setErrorMessage('Please upload a proof file.');
-            return;
-        }
-        if (uploadedFile) {
-            setIsLoading(true);
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                try {
-                    const fileContent = event.target.result;
-                    const proofObject = JSON.parse(fileContent);
-
-                    if (Array.isArray(proofObject.proof.publicInputs)) {
-                        proofObject.proof.publicInputs = new Map(proofObject.proof.publicInputs);
-                    }
-
-                    if (typeof proofObject.proof.proof === 'object' && !Array.isArray(proofObject.proof.proof)) {
-                        proofObject.proof.proof = Object.values(proofObject.proof.proof);
-                    }
-
-                    console.log("before awaiting verify");
-                    const verified = await verifyProof(proofObject, 16);
-                    console.log(verified);
-                    if (verified) {
-                        // fetch('http://localhost:8000/generateToken', {
-                        //     method: 'GET',
-                        //     headers: {
-                        //         'Content-Type': 'application/json'
-                        //     }
-                        // })
-                        //     .then(response => {
-                        //         navigate('/chat');
-                        //     })
-                        //     // .then(token => {
-                        //     //     localStorage.setItem('jwtToken', token);
-                        //     //     console.log(localStorage.getItem('jwtToken'));
-                        //     //     navigate('/chat');
-                        //     // })
-                        //     .catch(error => {
-                        //         console.error('Error:', error);
-                        //     });
-
-                        navigate('/chat');
-
-
-                    } else {
-                        console.log('Proof verification failed');
-                    }
-                } catch (error) {
-                    setIsLoading(false);
-                    console.error('Error processing proof:', error);
-                    setErrorMessage('Error processing proof.');
-                }
-            };
-            reader.readAsText(uploadedFile);
-        }
-    };
 
     return (
         <div className="login-container bg-custom-login-bg h-screen flex justify-center items-center">
@@ -125,51 +185,57 @@ export default function Login() {
                         {errorMessage}
                     </div>
                 )}
-                <div className="w-full mb-2 p-2">
-                    <ActionButton onClick={handleTwitterAuth} disabled={showLoginInput}>
-                        Login with X
-                    </ActionButton>
-                </div>
-                <div className="w-full mb-2 p-2">
-                    <ActionButton onClick={handleLoginToggle}>
-                        Login with Proof
-                    </ActionButton>
-                </div>
-                {showLoginInput && (
-                    <div className="flex flex-col items-center w-full">
-                        <div className="w-full mb-2 p-2">
-                            <p className="text-center text-gray-600">Upload your proof</p>
-                        </div>
-                        <div className="w-full mb-2 p-2">
-                            <input
-                                type="file"
-                                accept=".txt"
-                                onChange={handleFileChange}
-                                className="mb-2 p-2 border border-gray-300 rounded w-full"
-                            />
-                            <ActionButton className="flex justify-center items-center"
-                                onClick={handleProofLogin} disabled={isLoading}>
-                                {isLoading ? (
-                                    <>
-                                        <div className="loader"></div>
-                                        <span>Verifying</span>
-                                    </>
-                                ) : (
-                                    "Submit"
-                                )}
-                            </ActionButton>
-                        </div>
+
+                {loading && (
+                    <div className="w-full mb-2 p-2 text-blue-500 text-center">
+                        Loading...
                     </div>
                 )}
+
+                {!action && (
+                    <>
+                        <ActionButton onClick={() => handleActionSelect('register')}>
+                            Register
+                        </ActionButton>
+                        <ActionButton onClick={() => handleActionSelect('login')}>
+                            Login
+                        </ActionButton>
+                    </>
+                )}
+
+                {action === 'register' && (
+                    <>
+                        <ActionButton onClick={handleConnectWithX}>
+                            Connect with X
+                        </ActionButton>
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={handlePasswordChange}
+                            className="mb-2 p-2 border border-gray-300 rounded w-full"
+                        />
+                        <ActionButton onClick={handleRegister}>
+                            Register
+                        </ActionButton>
+                    </>
+                )}
+
+                {action === 'login' && (
+                    <>
+                        <input
+                            type="password"
+                            placeholder="Enter password"
+                            value={password}
+                            onChange={handlePasswordChange}
+                            className="mb-2 p-2 border border-gray-300 rounded w-full"
+                        />
+                        <ActionButton onClick={handleLogin}>
+                            Login
+                        </ActionButton>
+                    </>
+                )}
             </div>
-
-            {showGenerateProofModal && (
-                <GenerateProofModal
-                    isOpen={showGenerateProofModal}
-                    onClose={closeGenerateProofModal}
-                />
-            )}
-
         </div>
     );
 }

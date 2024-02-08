@@ -19,7 +19,11 @@ class Semaphore {
 
   addMember(id: string) {
     const identity = new Identity(id);
-    this.group.addMember(identity.getCommitment());
+    const commitment = identity.getCommitment();
+    this.group.addMember(commitment);
+    console.log(`Added member with ID: ${id}`);
+    this.logState();
+    return commitment;
   }
 
   async getProof(id: string) {
@@ -36,6 +40,10 @@ class Semaphore {
   async checkProof(proof: any) {
     const check = await verifyProof(proof, this.group.depth);
     return check;
+  }
+
+  logState() {
+    console.log(`Group ID: ${this.group.id}, Tree Depth: ${this.group.depth}`);
   }
 }
 export const semaphoreInstance = new Semaphore(16);
